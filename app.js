@@ -11,8 +11,13 @@ function init() {
     scene = new THREE.Scene();
     clock = new THREE.Clock();
 
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(2, 2, 5);
+    // Modify these values to adjust the camera's position and FOV
+    const cameraFOV = 75;  // Field of View
+    const cameraPositionZ = 10; // Distance from the scene along the Z-axis
+
+    camera = new THREE.PerspectiveCamera(cameraFOV, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, cameraPositionZ);
+
 
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
