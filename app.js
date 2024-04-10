@@ -1,8 +1,9 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.118/build/three.module.js';
 import { FBXLoader } from 'https://cdn.jsdelivr.net/npm/three@0.118/examples/jsm/loaders/FBXLoader.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.118/examples/jsm/controls/OrbitControls.js';
 
-let camera, scene, renderer, clock;
-let mixers = [];
+let camera, scene, renderer, controls;
+let clock, mixers = [];
 let currentAnimation = 0;
 let switchTime = 10; // Switch every 10 seconds
 let nextSwitch = switchTime;
@@ -11,23 +12,22 @@ function init() {
     scene = new THREE.Scene();
     clock = new THREE.Clock();
 
-    // Modify these values to adjust the camera's position and FOV
-    const cameraFOV = 75;  // Field of View
-    const cameraPositionZ = 100; // Distance from the scene along the Z-axis
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 10);
 
-    camera = new THREE.PerspectiveCamera(cameraFOV, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(100, 100, cameraPositionZ);
-
-
-    renderer = new THREE.WebGLRenderer();
+    renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
+
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
 
     const ambientLight = new THREE.AmbientLight(0xcccccc, 0.4);
     scene.add(ambientLight);
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(1, 1, 0).normalize();
+    directionalLight.position.set(1, 1, 1);
     scene.add(directionalLight);
 
     const loader = new FBXLoader();
@@ -42,8 +42,7 @@ function loadFBXAnimation(loader, path) {
         const mixer = new THREE.AnimationMixer(object);
         mixers.push(mixer);
 
-        const action = mixer.clipAction(object.animations[0]);
-        action.play();
+        mixer.clipAction(object.animations[0]).play();
 
         object.traverse(function (child) {
             if (child.isMesh) {
@@ -52,7 +51,7 @@ function loadFBXAnimation(loader, path) {
             }
         });
 
-        if (scene.children.length === 1) { // Assuming the first loaded animation is initially visible
+        if (mixers.length === 1) { // Add the first model to the scene
             scene.add(object);
         }
     });
@@ -62,22 +61,19 @@ function animate() {
     requestAnimationFrame(animate);
 
     const delta = clock.getDelta();
-
-    mixers.forEach((mixer, index) => {
-        if (index === currentAnimation) {
-            mixer.update(delta);
-        }
-    });
+    if (mixers[currentAnimation]) {
+        mixers[currentAnimation].update(delta);
+    }
 
     if (mixers.length > 1 && (nextSwitch -= delta) <= 0) {
         nextSwitch = switchTime;
-        currentAnimation = (currentAnimation + 1) % mixers.length;
+        scene.remove(scene.children.find(child => child.type === 'Group'));
 
-        // Swap the FBX models in the scene
-        scene.remove(scene.children[1]); // Assuming the first child is a light
+        currentAnimation = (currentAnimation + 1) % mixers.length;
         scene.add(mixers[currentAnimation].getRoot());
     }
 
+    controls.update(); // Required if controls.enableDamping or controls.autoRotate are set to true
     renderer.render(scene, camera);
 }
 
