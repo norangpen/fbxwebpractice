@@ -13,10 +13,10 @@ function init() {
 
     // Modify these values to adjust the camera's position and FOV
     const cameraFOV = 75;  // Field of View
-    const cameraPositionZ = 10; // Distance from the scene along the Z-axis
+    const cameraPositionZ = 100; // Distance from the scene along the Z-axis
 
     camera = new THREE.PerspectiveCamera(cameraFOV, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, cameraPositionZ);
+    camera.position.set(100, 100, cameraPositionZ);
 
 
     renderer = new THREE.WebGLRenderer();
